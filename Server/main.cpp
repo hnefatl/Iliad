@@ -19,13 +19,27 @@ std::string RunCommand(std::string Input);
 
 int main(int argc, char *argv[])
 {
-	RunCommand("echo hello");
+	std::cout<<RunCommand("echo hello");
 	_getch();
 	return 0;
 }
 
 std::string RunCommand(std::string Input)
 {
-	system(Input.c_str());
-	return "";
+	FILE *Pipe=_popen(Input.c_str(), "r");
+	if(!Pipe)
+	{
+		return "Error";
+	}
+	char Buffer[256];
+	std::string Result="";
+	while(!feof(Pipe))
+	{
+		if(fgets(Buffer, 256, Pipe)!=NULL)
+		{
+			Result+=Buffer;
+		}
+	}
+	_pclose(Pipe);
+	return Result;
 }
