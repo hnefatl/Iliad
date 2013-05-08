@@ -32,17 +32,20 @@ int main(int argc, char *argv[])
 	std::cout<<"Enter Target Port: ";
 	std::getline(std::cin, Port);
 	system("cls");
+	std::cout<<"Attempting to connect...";
 	client=Client();
 
 	if(!client.Connect(IP, Port))
 	{
 		// Connection failed
-		std::cout<<"Could not connect to "<<IP<<":"<<Port<<". Press any key to exit..."<<std::endl;
+		system("cls");
+		std::cout<<"Could not connect to "<<IP<<"|"<<Port<<". Press any key to exit..."<<std::endl;
 		_getch();
 		return 1;
 	}
 
 	// Command loop
+	system("cls");
 	std::string Input;
 	while(true)
 	{

@@ -7,6 +7,7 @@
 #include <WS2tcpip.h>
 #include <winsock.h>
 #include <Windows.h>
+#include "upnpnat.h"
 
 Server::Server()
 {
@@ -21,18 +22,30 @@ bool Server::Bind(std::string Port)
 	{
 		return false;
 	}
-
+	
+	UPNPNAT UPNP=UPNPNAT();
+	UPNP.init();
+	if(!UPNP.discovery())
+	{
+		return false;
+	}
+	if(!UPNP.add_port_mapping("SysServer", "127.0.0.1", 597, 597, "TCP"))
+	{
+		return false;
+	}
+	
 	addrinfo Hints, *ServerInfo;
 
 	memset(&Hints, 0, sizeof(Hints));
-	Hints.ai_family=AF_UNSPEC;
+	Hints.ai_family=AF_INET;
 	Hints.ai_socktype=SOCK_STREAM;
+	Hints.ai_protocol=IPPROTO_TCP;
 	Hints.ai_flags=AI_PASSIVE;
 
 	int Rcv;
-	if((Rcv=getaddrinfo(NULL, Port.c_str(), &Hints, &ServerInfo))!=0)
+	if((Rcv=getaddrinfo("127.0.0.1", Port.c_str(), &Hints, &ServerInfo))!=0)
 	{
-		std::cerr<<gai_strerror(Rcv);
+		Shutdown();
 		return false;
 	}
 
@@ -47,6 +60,7 @@ bool Server::Bind(std::string Port)
 
 		if(setsockopt(ServerSocket, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int))==-1)
 		{
+			Shutdown();
 			return false;
 		}
 
@@ -63,14 +77,20 @@ bool Server::Bind(std::string Port)
 	{
 		return false;
 	}
+	char s[INET6_ADDRSTRLEN];
+	std::cout<<inet_ntop(p->ai_family, p->ai_addr, s, sizeof(s));
 
-	freeaddrinfo(p);
 	freeaddrinfo(ServerInfo);
 
 	return true;
 }
 void Server::Start()
 {
+	if(listen(ServerSocket, 5) == -1)
+	{
+		return;
+	}
+
 	// Wait for a connection
 	while(true)
 	{
@@ -85,15 +105,21 @@ void Server::Start()
 
 		char s[INET6_ADDRSTRLEN];
 		inet_ntop(Storage.ss_family, GetInAddr((sockaddr *)&Storage), s, sizeof(s));
+		std::cout<<"Connection received from: "<<s<<std::endl;
 		// Got connection
 
 		while(true)
 		{
 			std::string Received=Receive();
-			if(Received=="disconnect")
+			if(Received=="/disconnect")
 			{
 				closesocket(ClientSocket);
 				break;
+			}
+			else if (Received=="/shutdown")
+			{
+				Shutdown();
+				return;
 			}
 			else
 			{
@@ -101,6 +127,8 @@ void Server::Start()
 			}
 		}
 	}
+
+	Shutdown();
 }
 
 bool Server::Send(std::string Message)
