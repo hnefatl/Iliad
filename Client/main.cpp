@@ -15,60 +15,65 @@ int main(int argc, char *argv[])
 #include <winsock.h>
 #include <Windows.h>
 
-std::string SendCommand(std::string Command);
-void Shutdown();
-void PrintError(int ErrCode);
-void PrintError(std::string Error);
+#include "Client.h"
 
-#define PORT "597"
-const unsigned int MAX_DATA_SIZE=4096;
-int ServerSocket;
-addrinfo Hints, *ServerInfo;
+void Exit();
+
+Client client;
 
 int main(int argc, char *argv[])
 {
-	if(argc!=2)
+	// Register exit function
+	atexit(Exit);
+
+	std::string IP, Port;
+	std::cout<<"Enter Target IP: ";
+	std::getline(std::cin, IP);
+	std::cout<<"Enter Target Port: ";
+	std::getline(std::cin, Port);
+	system("cls");
+	client=Client();
+
+	if(!client.Connect(IP, Port))
 	{
-		std::cout<<"Usage: Client.exe :TargetIP\n";
+		// Connection failed
+		std::cout<<"Could not connect to "<<IP<<":"<<Port<<". Press any key to exit..."<<std::endl;
+		_getch();
 		return 1;
 	}
-	
+
 	// Command loop
 	std::string Input;
-	while (true)
+	while(true)
 	{
+		std::cout<<"> ";
 		std::getline(std::cin, Input);
 
 		if(Input=="exit")
 		{
-			Shutdown();
 			break;
 		}
 		else
 		{
-			std::cout<<SendCommand(Input);
+			client.Send(Input);
+			std::string Recieved=client.Recieve();
+			if(Recieved=="")
+			{
+
+			}
+			else
+			{
+				std::cout<<Recieved;
+			}
 		}
 	}
 
+	client.Shutdown();
 
 	return 0;
 }
 
-std::string SendCommand(std::string Command)
+void Exit()
 {
-	return "";
-}
-
-void Shutdown()
-{
-
-}
-
-void PrintError(int ErrCode)
-{
-	std::cout<<"Error: "<<std::endl<<gai_strerror(ErrCode)<<std::endl;
-}
-void PrintError(std::string Error)
-{
-	std::cout<<Error<<std::cout;
+	client.Shutdown();
 }

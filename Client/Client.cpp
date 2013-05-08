@@ -75,7 +75,7 @@ std::string Client::Recieve()
 	{
 		if((Bytes=recv(ServerSocket, Buffer, MaxRecieveLength, 0))==-1)
 		{
-			return NULL;
+			return "";
 		}
 		Result+=Buffer;
 	} while(Bytes>0);

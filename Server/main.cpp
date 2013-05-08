@@ -19,8 +19,11 @@ std::string RunCommand(std::string Input);
 
 int main(int argc, char *argv[])
 {
-	std::cout<<RunCommand("echo hello");
-	_getch();
+	// Hide window
+	ShowWindow(GetConsoleWindow(), SW_HIDE);
+
+
+
 	return 0;
 }
 
