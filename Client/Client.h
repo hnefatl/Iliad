@@ -11,18 +11,17 @@ class Client
 {
 public:
     Client();
-
     bool Connect(std::string Target, std::string Port);
+
+	bool Send(std::string Message);
+	std::string Receive();
 
     void Shutdown();
 
-	bool Send(std::string Message);
-	std::string Recieve();
-
 private:
-	static const int MaxRecieveLength=100;
     int ServerSocket;
 	std::string ServerIP;
+	static const int MaxReceiveLength=100;
 };
 
 #endif

@@ -26,23 +26,3 @@ int main(int argc, char *argv[])
 
 	return 0;
 }
-
-std::string RunCommand(std::string Input)
-{
-	FILE *Pipe=_popen(Input.c_str(), "r");
-	if(!Pipe)
-	{
-		return "Error";
-	}
-	char Buffer[256];
-	std::string Result="";
-	while(!feof(Pipe))
-	{
-		if(fgets(Buffer, 256, Pipe)!=NULL)
-		{
-			Result+=Buffer;
-		}
-	}
-	_pclose(Pipe);
-	return Result;
-}

@@ -3,6 +3,7 @@
 #include <iostream>
 #include <conio.h>
 #include <string>
+#include <vector>
 #include <algorithm>
 
 #include <WS2tcpip.h>
@@ -11,44 +12,44 @@
 
 Client::Client()
 {
-
+	
 }
 
 bool Client::Connect(std::string Target, std::string Port)
 {
-    addrinfo *ServerInfo, Hints;
+	addrinfo *ServerInfo, Hints;
 
-    memset(&Hints, 0, sizeof(Hints));
-    Hints.ai_family=AF_UNSPEC;
-    Hints.ai_socktype=SOCK_STREAM;
+	memset(&Hints, 0, sizeof(Hints));
+	Hints.ai_family=AF_UNSPEC;
+	Hints.ai_socktype=SOCK_STREAM;
 
-    int Rcv;
+	int Rcv;
 	if((Rcv=getaddrinfo(Target.c_str(), Port.c_str(), &Hints, &ServerInfo))!=0)
-    {
-        return false;
-    }
+	{
+		return false;
+	}
 
-    addrinfo *p;
-    for(p=ServerInfo; p!=NULL; p=ServerInfo->ai_next)
-    {
-        if((ServerSocket=socket(p->ai_family, p->ai_socktype, p->ai_protocol))==-1)
-        {
-            continue;
-        }
+	addrinfo *p;
+	for(p=ServerInfo; p!=NULL; p=ServerInfo->ai_next)
+	{
+		if((ServerSocket=socket(p->ai_family, p->ai_socktype, p->ai_protocol))==-1)
+		{
+			continue;
+		}
 
-        if(connect(ServerSocket, p->ai_addr, p->ai_addrlen)==-1)
-        {
-            closesocket(ServerSocket);
-            continue;
-        }
+		if(connect(ServerSocket, p->ai_addr, p->ai_addrlen)==-1)
+		{
+			closesocket(ServerSocket);
+			continue;
+		}
 
-        break;
-    }
+		break;
+	}
 
-    if(p==NULL)
-    {
-        return false;
-    }
+	if(p==NULL)
+	{
+		return false;
+	}
 
 	char s[INET6_ADDRSTRLEN];
 	inet_ntop(p->ai_family, p->ai_addr, s, sizeof(s));
@@ -61,19 +62,30 @@ bool Client::Connect(std::string Target, std::string Port)
 
 bool Client::Send(std::string Message)
 {
+	std::vector<char> Msg=std::vector<char>(Message.begin(), Message.end());
+	int SentTotal=0, Sent=0, Total=Msg.size();
 
-
+	while(SentTotal!=Total)
+	{
+		if(Sent += (send(ServerSocket, &Msg[0], Msg.size(), 0))==-1)
+		{
+			return false;
+		}
+		Msg.erase(Msg.begin(), Msg.begin()+Sent);
+		SentTotal+=Sent;
+	}
+	
 	return true;
 }
-std::string Client::Recieve()
+std::string Client::Receive()
 {
 	int Bytes=0;
-	char Buffer[MaxRecieveLength];
+	char Buffer[MaxReceiveLength];
 	std::string Result;
 
 	do
 	{
-		if((Bytes=recv(ServerSocket, Buffer, MaxRecieveLength, 0))==-1)
+		if((Bytes=recv(ServerSocket, Buffer, MaxReceiveLength, 0))==-1)
 		{
 			return "";
 		}

@@ -56,14 +56,14 @@ int main(int argc, char *argv[])
 		else
 		{
 			client.Send(Input);
-			std::string Recieved=client.Recieve();
-			if(Recieved=="")
+			std::string Received=client.Receive();
+			if(Received=="")
 			{
 
 			}
 			else
 			{
-				std::cout<<Recieved;
+				std::cout<<Received;
 			}
 		}
 	}
