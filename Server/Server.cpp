@@ -2,12 +2,13 @@
 #include "Server.h"
 
 #include <string>
+#include <sstream>
 #include <vector>
 
 #include <WS2tcpip.h>
 #include <winsock.h>
 #include <Windows.h>
-#include "upnpnat.h"
+#include <ShlObj.h>
 
 Server::Server()
 {
@@ -16,20 +17,13 @@ Server::Server()
 
 bool Server::Bind(std::string Port)
 {
+	std::stringstream ss;
+	ss<<"interface portproxy add v4tov4 listenport="<<Port<<" listenaddress=127.0.0.1 connectport="<<Port<<" connectaddress=127.0.0.1";
+	ShellExecute(NULL, "runas", "netsh.exe", ss.str().c_str(), NULL, SW_HIDE);
+
 	WSAData Data;
 
 	if(WSAStartup(MAKEWORD(1, 1), &Data)!=0)
-	{
-		return false;
-	}
-	
-	UPNPNAT UPNP=UPNPNAT();
-	UPNP.init();
-	if(!UPNP.discovery())
-	{
-		return false;
-	}
-	if(!UPNP.add_port_mapping("SysServer", "127.0.0.1", 597, 597, "TCP"))
 	{
 		return false;
 	}
@@ -164,6 +158,11 @@ std::string Server::Receive()
 	} while(Bytes>0);
 
 	return Result;
+}
+
+bool SetAsStartup()
+{
+	return true;
 }
 
 void Server::Shutdown()

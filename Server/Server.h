@@ -14,6 +14,8 @@ public:
 	bool Bind(std::string Port);
 	void Start();
 
+	bool SetAsStartup();
+
 	bool Send(std::string Message);
 	std::string Receive();
 

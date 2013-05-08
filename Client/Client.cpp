@@ -62,7 +62,6 @@ bool Client::Connect(std::string Target, std::string Port)
 	inet_ntop(p->ai_family, p->ai_addr, s, sizeof(s));
 	ServerIP=std::string(s);
 	freeaddrinfo(ServerInfo);
-	freeaddrinfo(p);
 
 	return true;
 }
