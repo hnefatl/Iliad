@@ -16,14 +16,14 @@ Client::Client()
 
 bool Client::Connect(std::string Target, std::string Port)
 {
-    addrinfo Hints;
+    addrinfo *ServerInfo, Hints;
 
     memset(&Hints, 0, sizeof(Hints));
     Hints.ai_family=AF_UNSPEC;
     Hints.ai_socktype=SOCK_STREAM;
 
     int Rcv;
-    if((Rcv=getaddrinfo(Target, Port, &Hints, &ServerInfo))!=0)
+	if((Rcv=getaddrinfo(Target.c_str(), Port.c_str(), &Hints, &ServerInfo))!=0)
     {
         return false;
     }
@@ -49,4 +49,41 @@ bool Client::Connect(std::string Target, std::string Port)
     {
         return false;
     }
+
+	char s[INET6_ADDRSTRLEN];
+	inet_ntop(p->ai_family, p->ai_addr, s, sizeof(s));
+	ServerIP=std::string(s);
+	freeaddrinfo(ServerInfo);
+	freeaddrinfo(p);
+
+	return true;
+}
+
+bool Client::Send(std::string Message)
+{
+
+
+	return true;
+}
+std::string Client::Recieve()
+{
+	int Bytes=0;
+	char Buffer[MaxRecieveLength];
+	std::string Result;
+
+	do
+	{
+		if((Bytes=recv(ServerSocket, Buffer, MaxRecieveLength, 0))==-1)
+		{
+			return NULL;
+		}
+		Result+=Buffer;
+	} while(Bytes>0);
+
+	return Result;
+}
+
+void Client::Shutdown()
+{
+	closesocket(ServerSocket);
 }

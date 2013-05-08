@@ -16,9 +16,13 @@ public:
 
     void Shutdown();
 
+	bool Send(std::string Message);
+	std::string Recieve();
+
 private:
+	static const int MaxRecieveLength=100;
     int ServerSocket;
-    addrinfo *ServerInfo;
+	std::string ServerIP;
 };
 
 #endif

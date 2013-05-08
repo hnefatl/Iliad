@@ -32,53 +32,7 @@ int main(int argc, char *argv[])
 		std::cout<<"Usage: Client.exe :TargetIP\n";
 		return 1;
 	}
-
-	// Reset data
-	memset(&Hints, 0, sizeof(Hints));
-	Hints.ai_family=AF_UNSPEC;
-	Hints.ai_socktype=SOCK_STREAM;
-
-	int Temp;
-	if(Temp=getaddrinfo(argv[1], PORT, &Hints, &ServerInfo)!=0)
-	{
-		// Failed to get information
-		PrintError(Temp);
-		return 1;
-	}
-
-	// Connect to target
-	addrinfo *P;
-	for(P=ServerInfo; P!=NULL; P=P->ai_next)
-	{
-		if((ServerSocket=socket(P->ai_family, P->ai_socktype, P->ai_protocol))==-1)
-		{
-			PrintError("Could not connect to a target.");
-			continue;
-		}
-
-		if(connect(ServerSocket, P->ai_addr, P->ai_addrlen)==-1)
-		{
-			closesocket(ServerSocket);
-			PrintError("Client: Connect");
-			continue;
-		}
-
-		break;
-	}
-
-	if(P==NULL)
-	{
-		// All connections failed
-		PrintError("Client connection failed.");
-		return 2;
-	}
-
-	char s[INET6_ADDRSTRLEN];
-	inet_ntop(P->ai_family, P->ai_addr, s, sizeof(s));
-	std::cout<<"Connecting to server: "<<s<<std::endl;
-
-	freeaddrinfo(ServerInfo);
-
+	
 	// Command loop
 	std::string Input;
 	while (true)
