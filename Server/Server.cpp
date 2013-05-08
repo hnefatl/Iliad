@@ -15,6 +15,13 @@ Server::Server()
 
 bool Server::Bind(std::string Port)
 {
+	WSAData Data;
+
+	if(WSAStartup(MAKEWORD(1, 1), &Data)!=0)
+	{
+		return false;
+	}
+
 	addrinfo Hints, *ServerInfo;
 
 	memset(&Hints, 0, sizeof(Hints));
@@ -25,6 +32,7 @@ bool Server::Bind(std::string Port)
 	int Rcv;
 	if((Rcv=getaddrinfo(NULL, Port.c_str(), &Hints, &ServerInfo))!=0)
 	{
+		std::cerr<<gai_strerror(Rcv);
 		return false;
 	}
 
@@ -133,6 +141,8 @@ std::string Server::Receive()
 void Server::Shutdown()
 {
 	closesocket(ClientSocket);
+
+	WSACleanup();
 }
 
 std::string Server::RunCommand(std::string Input)

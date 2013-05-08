@@ -17,6 +17,13 @@ Client::Client()
 
 bool Client::Connect(std::string Target, std::string Port)
 {
+	WSAData Data;
+
+	if(WSAStartup(MAKEWORD(1, 1), &Data)!=0)
+	{
+		return false;
+	}
+
 	addrinfo *ServerInfo, Hints;
 
 	memset(&Hints, 0, sizeof(Hints));
@@ -98,4 +105,6 @@ std::string Client::Receive()
 void Client::Shutdown()
 {
 	closesocket(ServerSocket);
+
+	WSACleanup();
 }

