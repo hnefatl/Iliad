@@ -3,6 +3,7 @@
 #include <iostream>
 #include <conio.h>
 #include <string>
+#include <sstream>
 #include <vector>
 #include <algorithm>
 
@@ -12,7 +13,7 @@
 
 Client::Client()
 {
-	
+
 }
 
 bool Client::Connect(std::string Target, std::string Port)
@@ -69,34 +70,70 @@ bool Client::Connect(std::string Target, std::string Port)
 bool Client::Send(std::string Message)
 {
 	std::vector<char> Msg=std::vector<char>(Message.begin(), Message.end());
-	int SentTotal=0, Sent=0, Total=Msg.size();
+	int SentTotal=0, Sent=0;
 
-	while(SentTotal!=Total)
+	// Add message size
+	std::string Size;
+	std::stringstream ss=std::stringstream();
+	ss<<Msg.size();
+	Size=ss.str();
+	// Add size indicator length
+	Msg.insert(Msg.begin(), Size.size());
+	Msg.insert(Msg.begin()+1, Size.begin(), Size.end());
+
+	while(Msg.size()>0)
 	{
-		if(Sent += (send(ServerSocket, &Msg[0], Msg.size(), 0))==-1)
+		if((Sent = send(ServerSocket, &Msg[0], Msg.size(), 0))==-1)
 		{
 			return false;
 		}
 		Msg.erase(Msg.begin(), Msg.begin()+Sent);
-		SentTotal+=Sent;
 	}
-	
+
 	return true;
 }
 std::string Client::Receive()
 {
 	int Bytes=0;
-	char Buffer[MaxReceiveLength];
+	std::vector<char> Buffer;
 	std::string Result;
 
+	Buffer.resize(1);
+
+	// Get size of of length of size
+	Bytes=recv(ServerSocket, &Buffer[0], 1, 0);
+	if(Bytes<=0)
+	{
+		return "";
+	}
+	int BytesToGet=Buffer[0];
+
+	Buffer.clear();
+	Buffer.resize(BytesToGet);
+	// Get length
+	Bytes=recv(ServerSocket, &Buffer[0], BytesToGet, 0);
+	if(Bytes<=0)
+	{
+		return "";
+	}
+
+	std::stringstream ss=std::stringstream();
+	for(int x=0; x<BytesToGet; x++)
+	{
+		ss<<Buffer[x];
+	}
+
+	int PackageBytes=atoi(ss.str().c_str());
+	Buffer.clear();
+	Buffer.resize(PackageBytes);
 	do
 	{
-		if((Bytes=recv(ServerSocket, Buffer, MaxReceiveLength, 0))==-1)
+		if((Bytes=recv(ServerSocket, &Buffer[0], PackageBytes, 0))<=0)
 		{
 			return "";
 		}
-		Result+=Buffer;
-	} while(Bytes>0);
+		Result.append(Buffer.begin(), Buffer.end());
+	} while(Bytes!=PackageBytes);
 
 	return Result;
 }

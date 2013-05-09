@@ -25,7 +25,7 @@ int main(int argc, char *argv[])
 	//ShowWindow(GetConsoleWindow(), SW_HIDE);
 
 	Server server=Server();
-	if(!server.Bind("597"))
+	if(!server.Bind("34652"))
 	{
 		return 1;
 	}

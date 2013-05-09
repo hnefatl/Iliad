@@ -21,7 +21,6 @@ public:
 private:
     int ServerSocket;
 	std::string ServerIP;
-	static const int MaxReceiveLength=100;
 };
 
 #endif

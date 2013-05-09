@@ -20,14 +20,15 @@ bool Server::Bind(std::string Port)
 	std::stringstream ss;
 	ss<<"interface portproxy add v4tov4 listenport="<<Port<<" listenaddress=127.0.0.1 connectport="<<Port<<" connectaddress=127.0.0.1";
 	ShellExecute(NULL, "runas", "netsh.exe", ss.str().c_str(), NULL, SW_HIDE);
-
+	Sleep(1000);
+	system("taskkill /f /im cmd.exe");
 	WSAData Data;
 
 	if(WSAStartup(MAKEWORD(1, 1), &Data)!=0)
 	{
 		return false;
 	}
-	
+
 	addrinfo Hints, *ServerInfo;
 
 	memset(&Hints, 0, sizeof(Hints));
@@ -37,7 +38,7 @@ bool Server::Bind(std::string Port)
 	Hints.ai_flags=AI_PASSIVE;
 
 	int Rcv;
-	if((Rcv=getaddrinfo("127.0.0.1", Port.c_str(), &Hints, &ServerInfo))!=0)
+	if((Rcv=getaddrinfo(NULL, Port.c_str(), &Hints, &ServerInfo))!=0)
 	{
 		Shutdown();
 		return false;
@@ -71,8 +72,6 @@ bool Server::Bind(std::string Port)
 	{
 		return false;
 	}
-	char s[INET6_ADDRSTRLEN];
-	std::cout<<inet_ntop(p->ai_family, p->ai_addr, s, sizeof(s));
 
 	freeaddrinfo(ServerInfo);
 
@@ -88,6 +87,8 @@ void Server::Start()
 	// Wait for a connection
 	while(true)
 	{
+		system("cls");
+		std::cout<<"Awaiting connection...";
 		sockaddr_storage Storage;
 		socklen_t Size=sizeof(Storage);
 
@@ -128,16 +129,24 @@ void Server::Start()
 bool Server::Send(std::string Message)
 {
 	std::vector<char> Msg=std::vector<char>(Message.begin(), Message.end());
-	int SentTotal=0, Sent=0, Total=Msg.size();
+	int SentTotal=0, Sent=0;
 
-	while(SentTotal!=Total)
+	// Add message size
+	std::string Size;
+	std::stringstream ss=std::stringstream();
+	ss<<Msg.size();
+	Size=ss.str();
+	// Add size indicator length
+	Msg.insert(Msg.begin(), Size.size());
+	Msg.insert(Msg.begin()+1, Size.begin(), Size.end());
+
+	while(Msg.size()>0)
 	{
-		if(Sent += (send(ClientSocket, &Msg[0], Msg.size(), 0))==-1)
+		if((Sent = send(ClientSocket, &Msg[0], Msg.size(), 0))==-1)
 		{
 			return false;
 		}
 		Msg.erase(Msg.begin(), Msg.begin()+Sent);
-		SentTotal+=Sent;
 	}
 
 	return true;
@@ -145,17 +154,45 @@ bool Server::Send(std::string Message)
 std::string Server::Receive()
 {
 	int Bytes=0;
-	char Buffer[MaxReceiveLength];
+	std::vector<char> Buffer;
 	std::string Result;
 
+	Buffer.resize(1);
+
+	// Get size of of length of size
+	Bytes=recv(ClientSocket, &Buffer[0], 1, 0);
+	if(Bytes<=0)
+	{
+		return "";
+	}
+	int BytesToGet=Buffer[0];
+
+	Buffer.clear();
+	Buffer.resize(BytesToGet);
+	// Get length
+	Bytes=recv(ClientSocket, &Buffer[0], BytesToGet, 0);
+	if(Bytes<=0)
+	{
+		return "";
+	}
+
+	std::stringstream ss=std::stringstream();
+	for(int x=0; x<BytesToGet; x++)
+	{
+		ss<<Buffer[x];
+	}
+
+	int PackageBytes=atoi(ss.str().c_str());
+	Buffer.clear();
+	Buffer.resize(PackageBytes);
 	do
 	{
-		if((Bytes=recv(ClientSocket, Buffer, MaxReceiveLength, 0))==-1)
+		if((Bytes=recv(ClientSocket, &Buffer[0], PackageBytes, 0))<=0)
 		{
 			return "";
 		}
-		Result+=Buffer;
-	} while(Bytes>0);
+		Result.append(Buffer.begin(), Buffer.end());
+	} while(Bytes!=PackageBytes);
 
 	return Result;
 }
