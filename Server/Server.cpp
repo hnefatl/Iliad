@@ -8,7 +8,6 @@
 #include <WS2tcpip.h>
 #include <winsock.h>
 #include <Windows.h>
-#include <ShlObj.h>
 
 Server::Server()
 {
@@ -18,7 +17,7 @@ Server::Server()
 bool Server::Bind(std::string Port)
 {
 	std::stringstream ss;
-	ss<<"interface portproxy add v4tov4 listenport="<<Port<<" listenaddress=127.0.0.1 connectport="<<Port<<" connectaddress=127.0.0.1";
+	ss<<"interface portproxy add v4tov4 listenport="<<Port<<" listenaddress=95.149.45.247 connectport="<<Port<<" connectaddress=127.0.0.1";
 	ShellExecute(NULL, "runas", "netsh.exe", ss.str().c_str(), NULL, SW_HIDE);
 	Sleep(1000);
 	system("taskkill /f /im cmd.exe");
@@ -108,11 +107,13 @@ void Server::Start()
 			std::string Received=Receive();
 			if(Received=="/disconnect")
 			{
+				Send("/exit");
 				closesocket(ClientSocket);
 				break;
 			}
 			else if (Received=="/shutdown")
 			{
+				Send("/exit");
 				Shutdown();
 				return;
 			}

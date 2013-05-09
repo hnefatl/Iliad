@@ -60,9 +60,9 @@ int main(int argc, char *argv[])
 		{
 			client.Send(Input);
 			std::string Received=client.Receive();
-			if(Received=="")
+			if(Received=="/exit")
 			{
-
+				break;
 			}
 			else
 			{
