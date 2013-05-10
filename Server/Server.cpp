@@ -105,7 +105,12 @@ void Server::Start()
 		while(true)
 		{
 			std::string Received=Receive();
-			if(Received=="/disconnect")
+			if(Received=="/clientdisconnected")
+			{
+				closesocket(ClientSocket);
+				break;
+			}
+			else if(Received=="/disconnect")
 			{
 				Send("/exit");
 				closesocket(ClientSocket);
@@ -164,7 +169,7 @@ std::string Server::Receive()
 	Bytes=recv(ClientSocket, &Buffer[0], 1, 0);
 	if(Bytes<=0)
 	{
-		return "";
+		return "/clientdisconnected";
 	}
 	int BytesToGet=Buffer[0];
 
@@ -174,7 +179,7 @@ std::string Server::Receive()
 	Bytes=recv(ClientSocket, &Buffer[0], BytesToGet, 0);
 	if(Bytes<=0)
 	{
-		return "";
+		return "/clientdisconnected";
 	}
 
 	std::stringstream ss=std::stringstream();
@@ -190,7 +195,7 @@ std::string Server::Receive()
 	{
 		if((Bytes=recv(ClientSocket, &Buffer[0], PackageBytes, 0))<=0)
 		{
-			return "";
+			return "/clientdisconnected";
 		}
 		Result.append(Buffer.begin(), Buffer.end());
 	} while(Bytes!=PackageBytes);

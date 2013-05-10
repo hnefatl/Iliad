@@ -63,7 +63,6 @@ bool Client::Connect(std::string Target, std::string Port)
 	inet_ntop(p->ai_family, p->ai_addr, s, sizeof(s));
 	ServerIP=std::string(s);
 	freeaddrinfo(ServerInfo);
-
 	return true;
 }
 
@@ -104,7 +103,7 @@ std::string Client::Receive()
 	Bytes=recv(ServerSocket, &Buffer[0], 1, 0);
 	if(Bytes<=0)
 	{
-		return "";
+		return "/serverdisconnected";
 	}
 	int BytesToGet=Buffer[0];
 
@@ -114,7 +113,7 @@ std::string Client::Receive()
 	Bytes=recv(ServerSocket, &Buffer[0], BytesToGet, 0);
 	if(Bytes<=0)
 	{
-		return "";
+		return "/serverdisconnected";
 	}
 
 	std::stringstream ss=std::stringstream();
@@ -124,23 +123,29 @@ std::string Client::Receive()
 	}
 
 	int PackageBytes=atoi(ss.str().c_str());
-	Buffer.clear();
-	Buffer.resize(PackageBytes);
-	do
+	if(PackageBytes>0)
 	{
-		if((Bytes=recv(ServerSocket, &Buffer[0], PackageBytes, 0))<=0)
+		Buffer.clear();
+		Buffer.resize(PackageBytes);
+		do
 		{
-			return "";
-		}
-		Result.append(Buffer.begin(), Buffer.end());
-	} while(Bytes!=PackageBytes);
+			if((Bytes=recv(ServerSocket, &Buffer[0], PackageBytes, 0))<=0)
+			{
+				return "/serverdisconnected";
+			}
+			Result.append(Buffer.begin(), Buffer.end());
+		} while(Bytes!=PackageBytes);
+	}
 
 	return Result;
 }
 
 void Client::Shutdown()
 {
+	if(ServerSocket>0)
+	{
+		Send("/disconnect");
+	}
 	closesocket(ServerSocket);
-
 	WSACleanup();
 }
